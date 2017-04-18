@@ -1,0 +1,10 @@
+id=ogyoutube
+name=OGYouTube VERSION_STUB
+version=v3.1-12.10.60
+versionCode=31
+author=OGMods
+description=OGYouTube, YouTube MOD with Downloader, Popup/Background/ScreenOff Playback, etc. Module adapted by laggardkernel.
+support=http://forum.xda-developers.com/showthread.php?t=2213945
+donate=http://ogmods.net/
+cacheModule=false
+template=3
