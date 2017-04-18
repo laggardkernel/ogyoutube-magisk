@@ -1,0 +1,99 @@
+v3.1 - 14/04/2017
+    - Fixed an issue with Popup mode
+    - Fixed an issue with seeking controls
+    - Fixed an issue that caused the video to stop when playing it in Background
+
+v3.0 - 13/04/2017
+    - Added Downloads Queue
+    - Added Seek Controls (Position, Volume, Brightness)
+    - Fixed some issues with updating the download links
+    - Fixed some issues with downloading
+    - Revamped Settings Screen
+    - Improved the Downloads app
+    - The Black screen when you come back from Popup/Background mode, will be added back sooner now
+    - Other Bug fixes and improvements
+
+v2.7 - 01/04/2017
+    - Root version and No-root version now support devices that doesn't have Google Services installed
+    - Added back "Enable All Qualities" option (doesn't work on all devices)
+    - Improved videos decryption process
+    - Fixed some issues with Android 4.x
+    - Improved 'Downloads' app
+    - Supported x86 architecture
+    - Other bug fixes
+
+v2.6 - 28/03/2017
+    - OGYouTube (Unroot version only) now support Devices that doesn't have Google Play Services installed
+    - Download notifications will vibrate only instead of making sound
+    - Fixed an issue when starting the app for the first time
+    - Fixed an issue when clicking the option menu on subscription videos
+    - Improved the download notification on Android Nougat
+    - Removed "Enable all qualities" since it doesn't work anymore
+    - Minor fixes and improvements
+
+v2.5 - 27/03/2017
+    - Updated the base version to YouTube 12.10.60
+    - Support the download on Android Nougat
+    - Fixed some issues with decrypting videos
+    - Fixed some issues with downloading
+    - Other bug fixes
+v2.1 - 31/08/2016
+    - Support downloading to the external SDCard (only on Lollipop and newer versions)
+    - Added an option to set a speed limit for downloads
+    - Added an option to select how many threads for each download
+    - Added back the option to auto switch to background playback
+    - Added an option to reset the transaction id (on Remove Ads)
+    - Fixed the issue that kept the download stopping by itself
+    - Fixed some decryption issues
+    - Fixed the default screen option
+    - Improved the download process
+    - Improved some other functions
+    - Many bug fixes and improvements
+
+v2.0 - 05/05/2016
+    - Updated the base to YouTube 11.16.62
+    - Fixed Popup issue on Android Marshmallow
+    - Fixed the Chromecast issue
+    - Fixed some download problems
+    - Supported chunk download (Download speed should be 5 times faster now)
+    - Now you only need 1 app to fix login fix (thanks to @MaR-V-iN)
+    - Many bug fixes and improvements
+
+v1.2 - 13/01/2016
+    - Android Marshmallow is now supported
+    - Fix download issues with some videos
+    - Other bug fixes and improvements
+
+v1.1 - 22/11/2015
+    - Updated to base 10.45.53
+    - Improved Download UI
+    - Added a new button to go to background
+    - Added a new option to go to background mode automatically
+    - Fix download issues with some videos
+    - Fix default quality problem
+    - Other bug fixes and improvements
+
+v1.0 - 16/08/2015
+    - Support downloading 60FPS
+    - Added Download button in Video's menu (Download w/o opening the video)
+    - Ability to Hide Downloads icon
+    - Ability to Rename videos before download
+    - Last downloaded quality will be selected automatically
+    - Fix bugs with merging files
+    - Fix default quality problem
+    - Fix notifications issues
+    - Fix download issues with some videos
+    - Login Fix
+
+v0.9 (Beta) - 17/04/2015
+    - Updated the base to 10.13.54
+    - New option to 'Remove Ads from (Downloads) app'
+    - New option to 'Clear downloads'
+    - New Support 60FPS
+    - New option to set 'Default screen'
+    - New option to set 'Default Quality'
+    - Added 'Downloads Setting' inside YouTube Settings
+    - Background Playback is on by default
+    - Enable ExoPlayer (Dogfood) options in YouTube Settings
+    - Fix MP3 Downloading Problems
+    - Other Bug Fixes
