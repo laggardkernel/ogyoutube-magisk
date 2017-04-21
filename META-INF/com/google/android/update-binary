@@ -274,35 +274,6 @@ source config.sh
 INSTALLER=$TMPDIR/$MODID
 MODPATH=$MOUNTPATH/$MODID
 
-rm -rf $INSTALLER
-mkdir -p $INSTALLER
-cd $INSTALLER
-# unzip -o "$ZIP" common/* module.prop
-unzip -o "$ZIP"
-
-##########################################################################################
-# Main
-##########################################################################################
-
-# Print mod name
-print_modname
-
-# Please leave this message in your flashable zip for credits :)
-ui_print "******************************"
-ui_print "Powered by Magisk (@topjohnwu)"
-ui_print "******************************"
-
-ui_print "- Mounting /system(ro), /vendor(ro), /data, /cache"
-mount -o ro /system 2>/dev/null
-mount -o ro /vendor 2>/dev/null
-mount /data 2>/dev/null
-mount /cache 2>/dev/null
-
-if [ ! -f '/system/build.prop' ]; then
-  ui_print "! Failed: /system could not be mounted!"
-  exit 1
-fi
-
 # FILE LOCATIONS
 
 if [ -d "/system/system" ]; then
@@ -335,6 +306,43 @@ elif [ -d "/sdcard/0" ]; then
   SDCARD=/sdcard/0
 else
   SDCARD=/sdcard
+fi
+
+MIRRDIR=""
+if $BOOTMODE; then
+  MIRRDIR="/dev/magisk/mirror"
+fi
+
+MIRRSYS="$MIRRDIR$SYS"
+
+# unzip files into temperary folder $INSTALLER
+rm -rf $INSTALLER
+mkdir -p $INSTALLER
+cd $INSTALLER
+# unzip -o "$ZIP" common/* module.prop
+unzip -o "$ZIP"
+
+##########################################################################################
+# Main
+##########################################################################################
+
+# Print mod name
+print_modname
+
+# Please leave this message in your flashable zip for credits :)
+ui_print "******************************"
+ui_print "Powered by Magisk (@topjohnwu)"
+ui_print "******************************"
+
+ui_print "- Mounting /system(ro), /vendor(ro), /data, /cache"
+mount -o ro /system 2>/dev/null
+mount -o ro /vendor 2>/dev/null
+mount /data 2>/dev/null
+mount /cache 2>/dev/null
+
+if [ ! -f '/system/build.prop' ]; then
+  ui_print "! Failed: /system could not be mounted!"
+  exit 1
 fi
 
 API=`grep_prop ro.build.version.sdk`
@@ -433,19 +441,35 @@ rm -rf $MODPATH
 mkdir -p $MODPATH$SYS
 # mkdir -p $MODPATH$SYS/vendor/etc
 
-# Handle removal files
-if [ -n "$REMOVAL" ]; then
-  ui_print "- Removing system files systemlessly"
-  for TARGET in $REMOVAL; do
-    if [ -d "$TARGET" ]; then
-      mktouch $MODPATH$TARGET/.replace
-      ui_print "  removing folder $TARGET"
-    elif [ -f "$TARGET" ]; then
-      mktouch $MODPATH$TARGET
-      ui_print "  removing file $TARGET"
-    elif [ -L $TARGET ]; then
-      mktouch $MODPATH$TARGET
-      ui_print "  removing symlink $TARGET"
+# Cleaning conflicts in /magisk
+if [ -n "$TESTREMOVAL" ]; then
+  ui_print "- Cleaning conflicts in /magisk"
+  for TARGET in $TESTREMOVAL; do
+    for FILETYPE in d f l; do
+      RESULT=$(find /magisk/* -name "${TARGET##/*/}" -type "$FILETYPE" 2>/dev/null | grep "$TARGET")
+      if [ ! -z "$RESULT" ]; then
+        for ITEM in $RESULT; do
+          ui_print "  $ITEM"
+          rm -rf "$ITEM"
+        done
+      fi
+    done
+  done
+fi
+
+# Handle removal files after test
+if [ -n "$TESTREMOVAL" ]; then
+  ui_print "- Removing existing files systemlessly"
+  for TARGET in $TESTREMOVAL; do
+    if [ -d "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET/.replace"
+    elif [ -f "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET"
+    elif [ -L "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET"
     else
       :
     fi
