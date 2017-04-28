@@ -1,6 +1,25 @@
-**NOTE**: This is an adaption by me([laggardkernel](https://github.com/laggardkernel)) of the original [OGYouTube](http://forum.xda-developers.com/showthread.php?t=2213945) MOD. All the credit belongs to the creator [OGMods @XDA](http://forum.xda-developers.com/member.php?u=4937202). The work here is done for experiment in Magisk.
+### Notes about the Magisk version
 
-# [APP][MOD]OGYouTube v3.1 Downloader, Popup/Background/ScreenOff Playback
+- [This](https://github.com/laggardkernel/ogyoutube-magisk) is an adaption by me([laggardkernel](https://github.com/laggardkernel)) of [the original OGYouTube MOD](http://forum.xda-developers.com/showthread.php?t=2213945). All the credit belongs to the creator [OGMods @XDA](http://forum.xda-developers.com/member.php?u=4937202). The work here is done for experiment in Magisk.
+- All of the apks in the magisk modules are from the post above. **No secondary modification**. The modules here try to make the replacement **systemless, automatical and revertible**.
+- There are three variants of the OGYouTube apks. I included two of them, root version and xposed version. And I made three kinds of magisk modules based on them, **root, xposed and unified version**. The OGYouTube app in each of them will replace the existing YouTube system app systemlessly.
+    - Xposed version is only for devices with **xposed framework installed**. The OGMods xposed module will be installed into /data automatically for YouTube login. OGMods will also be **automatically enabled** in Xposed Installer through script in the flashable zip. 
+    - Rooted version is only for devices with **root access**. MicroG for OGYouTube will be installed into /data automatically for YouTube login.
+    - Unified version combined the two kinds of YouTube above with a bigger size. It will choose one of them for you during installation. 
+    - Nonroot version is **NOT** included because it has a different package name compared with the official YouTube, which means it doesn't need to replace the official one in /system. Besides, there is also a **black-themed unroot version** made by [\[\] AL [] @XDA](http://forum.xda-developers.com/member.php?u=3703649). You can get the unroot versions at [the original OGYouTube MOD post](http://forum.xda-developers.com/showthread.php?t=2213945).
+- Install: 
+    - Flash the zips in Recovery, or;
+    - Flash the zips in Magisk Manager and reboot.
+- Uninstall:
+    - In recovery, flash the zip again;
+    - In MagiskManager, uninstall the module and reboot. The module will handle the restoration and cleaning up by itself. (Magisk v12+ is requried for the cleaning up feature)
+- Wellcome your feedbacks.
+
+The original post is put as below.
+
+-----
+
+# [APP][MOD]OGYouTube Downloader, Popup/Background/ScreenOff Playback
 
 ![OGYouTube Logo](https://img.xda-cdn.com/NhEMI8lxuykAeHO2BKZjw5cIcyY=/http%3A%2F%2Fogmods.net%2Fcontent%2Fimgs%2Flogo.png)
 
@@ -76,5 +95,6 @@ Last Updated 2017-04-01
 ![thumb 04](http://forum.xda-developers.com/attachment.php?attachmentid=3212634&d=1426455894)
 
 ### Credit
-- OGYouTube originally by [OGMods @XDA](http://forum.xda-developers.com/member.php?u=4937202) at [[APP][MOD]OGYouTube v2.1 Downloader, Popup/Background/ScreenOff Playback](http://forum.xda-developers.com/showthread.php?t=2213945)
-- Magisk module by [lagggardkernel @Github](https://github.com/laggardkernel)
+- [[APP][MOD]OGYouTube Downloader, Popup/Background/ScreenOff Playback](http://forum.xda-developers.com/showthread.php?t=2213945) by [OGMods @XDA](http://forum.xda-developers.com/member.php?u=4937202)
+- [Magisk - Root & Universal Systemless Interface \[Android 5.0+\]](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) by [topjohnwu @XDA](https://forum.xda-developers.com/member.php?u=4470081)
+- [OGYouTube Magisk module](https://github.com/laggardkernel/ogyoutube-magisk) by [lagggardkernel @Github](https://github.com/laggardkernel)

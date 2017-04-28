@@ -53,18 +53,26 @@ buildname="system.prop"
 tweakname="tweak.prop"
 
 VERSION="v3.1-12.10.60"
-REVISION="0.1"
+REVISION="0.2"
 
+CHECKERSCRIPT="ogyoutube-checker.sh"
+# DYNAMICSCRIPT=""
+
+XPOSEDSWITCH=true
+ROOTSWITCH=true
+THEMEDADDONSWITCH=false
+
+PACKAGENAME0=com.google.android.youtube
 # OGYouTube Xposed
 APKNAME1=OGXposed_v0.1.apk
 PACKAGENAME1=net.ogmods.xposed
-# OGYouTube Rooted
+# OGYouTube Root
 APKNAME2=microG4OGYT_v1.2.apk
 PACKAGENAME2=com.mgoogle.android.gms
-# OGYouTube Unrooted & Themed
-THEMEDINSTALL=false
+# OGYouTube Unroot & Themed
 APKNAME3=OGYouTube.apk
 PACKAGENAME3=com.google.android.ogyoutube
+# OGYouTube Themed version as add-on
 APKNAME4=OGYouTube_themed.apk
 
 ##########################################################################################
