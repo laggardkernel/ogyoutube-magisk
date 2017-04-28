@@ -53,25 +53,27 @@ buildname="system.prop"
 tweakname="tweak.prop"
 
 VERSION="v3.1-12.10.60"
-REVISION="0.1"
+REVISION="0.2"
 
+CHECKERSCRIPT="ogyoutube-checker.sh"
+# DYNAMICSCRIPT=""
+
+XPOSEDSWITCH=true
+ROOTSWITCH=true
+THEMEDADDONSWITCH=true
+
+PACKAGENAME0=com.google.android.youtube
 # OGYouTube Xposed
 APKNAME1=OGXposed_v0.1.apk
 PACKAGENAME1=net.ogmods.xposed
-# OGYouTube Rooted
+# OGYouTube Root
 APKNAME2=microG4OGYT_v1.2.apk
 PACKAGENAME2=com.mgoogle.android.gms
-# OGYouTube Unrooted & Themed
-THEMEDINSTALL=true
+# OGYouTube Unroot & Themed
 APKNAME3=OGYouTube.apk
 PACKAGENAME3=com.google.android.ogyoutube
+# OGYouTube Themed version as add-on
 APKNAME4=OGYouTube_themed.apk
-
-REMOVAL="
-/system/app/Youtube
-/system/priv-app/Youtube
-/system/priv-app/YouTube
-"
 
 ##########################################################################################
 # Installation Message
@@ -108,6 +110,66 @@ REPLACE="
 
 # Construct your own list here
 REPLACE="
+/system/app/YouTube
+"
+# Removal list from theme ready
+TESTREMOVAL="
+/system/app/GoogleLatinIME
+/system/priv-app/GoogleLatinIme
+/system/app/GoogleLatinIme
+/system/priv-app/GoogleLatinime
+/system/app/GoogleLatinime
+/system/priv-app/GoogleIMELatin
+/system/app/GoogleIMELatin
+/system/priv-app/GoogleImeLatin
+/system/app/GoogleImeLatin
+/system/priv-app/GoogleimeLatin
+/system/app/GoogleimeLatin
+/system/priv-app/LatinIMEGoogle
+/system/app/LatinIMEGoogle
+/system/priv-app/LatinImeGoogle
+/system/app/LatinImeGoogle
+/system/priv-app/LatinimeGoogle
+/system/app/LatinimeGoogle
+/system/app/Gboard
+/system/priv-app/Gboard
+/system/app/Gmail2
+/system/app/gmail2
+/system/app/PrebuiltGmail
+/system/priv-app/velvet
+/system/app/velvet
+/system/app/Velvet
+/system/priv-app/googleapp
+/system/app/Googleapp
+/system/app/GoogleApp
+/system/priv-app/Googleapp
+/system/priv-app/GoogleApp
+/system/priv-app/Velvet
+/system/priv-app/GoogleContacts
+/data/app/com.google.android.contacts
+/data/app/com.google.android.contacts-1
+/data/app/com.google.android.contacts-2
+/system/priv-app/GoogleDialer
+/data/app/com.google.android.dialer
+/data/app/com.google.android.dialer-1
+/data/app/com.google.android.dialer-2
+/system/priv-app/Hangout
+/system/priv-app/Hangouts
+/system/priv-app/hangout
+/system/priv-app/hangouts
+/system/app/Hangouts
+/system/app/photos
+/system/app/googlephotos
+/system/app/GooglePhotos
+/system/app/Photos
+/system/app/youtube
+/system/app/Youtube
+/system/app/YouTube
+"
+
+TESTREMOVAL="
+/system/app/youtube
+/system/app/Youtube
 /system/app/YouTube
 "
 

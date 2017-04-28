@@ -1,5 +1,11 @@
 #!/sbin/sh
 
+# Start tracking and logging
+LOGFILE=/cache/ogyoutube_inst.log
+rm "${LOGFILE}"
+touch "${LOGFILE}"
+exec >> "${LOGFILE}" 2>&1
+
 # Detect whether in boot mode
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true || BOOTMODE=false
 
@@ -118,6 +124,24 @@ image_size_check() {
 
 # custom functions
 
+# Unmount and clean the unziped files before exit
+# Usage: safe_exit "1" "! Operation failed"
+safe_exit() {
+  rm -rf $MODPATH
+  umount $MOUNTPATH
+  losetup -d $LOOPDEVICE
+  rmdir $MOUNTPATH
+  if ! $BOOTMODE; then
+    umount /system
+    umount /vendor 2>/dev/null
+  fi
+  rm -rf $INSTALLER
+  if [ ! -z "$2"]; then
+    ui_print "$2"
+  fi
+  exit "$1"
+}
+
 set_separate_perm_recursive() {
   find $1 -type d 2>/dev/null | while read dir; do
     set_perm $dir $2 $3 $6 $8
@@ -127,8 +151,9 @@ set_separate_perm_recursive() {
   done
 }
 
+# Install apk into /data, put apk in common/ before call this func
+# Usage: install_package "$APKNAME" "$PACKAGENAME" "force" "xposed"
 install_package() {
-  # Install/update Android package $APKNAME $PACKAGENAME
   if [ -f "$MODPATH/system/app/${1%.apk}/$1" ]; then
     ui_print "! ${1%.apk} is installed as system app"
     rm -rf /data/app/${2}-*
@@ -140,33 +165,37 @@ install_package() {
     # rm -rf /data/data/${2}
 
   elif [ -f "$INSTALLER/common/$1" ]; then
-    ui_print "- Installing ${1%.apk} into /data"
-    APKPATH="$2"-1
-    for i in `ls /data/app | grep "$2"-`; do
-      if [ `cat /data/system/packages.xml | grep $i >/dev/null 2>&1; echo $?` -eq 0 ]; then
-        APKPATH=$i
-        break;
+    if [ ! -z "$3" -a "$3" = "force" ] || [ -z `ls /data/app | grep "$2"-` ]; then
+      ui_print "- Installing ${1%.apk} into /data"
+      APKPATH="$2"-1
+      for i in 1 2 3 4 5 6 7 8 9; do
+        if [ `cat /data/system/packages.xml | grep "${2}-${i}" >/dev/null 2>&1; echo $?` -eq 0 ]; then
+          APKPATH="${2}-${i}"
+          break;
+        fi
+      done
+      rm -rf /data/app/"$2"-*
+
+      ui_print "  target path: /data/app/$APKPATH"
+
+      mkdir -p /data/app/$APKPATH
+      chown 1000.1000 /data/app/$APKPATH
+      chmod 0755 /data/app/$APKPATH
+      chcon u:object_r:apk_data_file:s0 /data/app/$APKPATH
+
+      cp $INSTALLER/common/$1 /data/app/$APKPATH/base.apk
+      chown 1000.1000 /data/app/$APKPATH/base.apk
+      chmod 0644 /data/app/$APKPATH/base.apk
+      chcon u:object_r:apk_data_file:s0 /data/app/$APKPATH/base.apk
+
+      rm /data/$1 2>/dev/null
+
+      # enable xposed module
+      if [ ! -z "$4" -a "$4" == "xposed" ]; then
+        enable_xposed_package "$1" "$2" "/data/app/$APKPATH/base.apk"
       fi
-    done
-    rm -rf /data/app/"$2"-*
-
-    ui_print "  target path: /data/app/$APKPATH"
-
-    mkdir -p /data/app/$APKPATH
-    chown 1000.1000 /data/app/$APKPATH
-    chmod 0755 /data/app/$APKPATH
-    chcon u:object_r:apk_data_file:s0 /data/app/$APKPATH
-
-    cp $INSTALLER/common/$1 /data/app/$APKPATH/base.apk
-    chown 1000.1000 /data/app/$APKPATH/base.apk
-    chmod 0644 /data/app/$APKPATH/base.apk
-    chcon u:object_r:apk_data_file:s0 /data/app/$APKPATH/base.apk
-
-    rm /data/$1 2>/dev/null
-
-    # enable xposed module
-    if [ ! -z "$3" -a "$3" == "xposed" ]; then
-      enable_xposed_package "$1" "$2" "/data/app/$APKPATH/base.apk"
+    else
+      ui_print "! $2 is installed in /data already"
     fi
 
   else
@@ -175,24 +204,30 @@ install_package() {
   fi
 }
 
+# Called by install_package to enable package in xposed module list automatically
+# Usage: enable_xposed_package "$APKNAME" "$PACKAGENAME" "/data/app/$PACKAGENAME-*/base.apk"
 enable_xposed_package(){
-  # $1, apk name
-  # $2, package name
-  # $3, full package path with the form of /data/app/*.*.*/base.apk
   if [ -z `ls /data/app | grep de.robv.android.xposed.installer-` ]; then
     ui_print "  Remember to enable ${1%.apk} in Xposed Installer later"
   else
     XPOSEDMODULES="/data/data/de.robv.android.xposed.installer/conf/modules.list"
     XPOSEDENABLED="/data/data/de.robv.android.xposed.installer/conf/enabled_modules.list"
     XPOSEDENABLEDXML="/data/data/de.robv.android.xposed.installer/shared_prefs/enabled_modules.xml"
-    FILEOWN=ls -l /data/data/de.robv.android.xposed.installer | /data/magisk/busybox awk '{printf $2}'
-    FILEGRO=ls -l /data/data/de.robv.android.xposed.installer | /data/magisk/busybox awk '{printf $3}'
+
+    if $BOOTMODE; then
+      FILEOWN=$(ls -l /data/data/de.robv.android.xposed.installer 2>/dev/null | sed 1q | /data/magisk/busybox awk '{printf $2}')
+      FILEGRO=$(ls -l /data/data/de.robv.android.xposed.installer 2>/dev/null | sed 1q | /data/magisk/busybox awk '{printf $3}')
+    else
+      FILEOWN=$(ls -l /data/data/de.robv.android.xposed.installer 2>/dev/null | sed 1q | /data/magisk/busybox awk '{printf $3}')
+      FILEGRO=$(ls -l /data/data/de.robv.android.xposed.installer 2>/dev/null | sed 1q | /data/magisk/busybox awk '{printf $4}')
+    fi
 
     for ITEM in "$XPOSEDMODULES" "$XPOSEDENABLED" "$XPOSEDENABLEDXML"; do
       if [ ! -f "$ITEM" ]; then
         mktouch "$ITEM"
-        chown "$FILEOWN" "$ITEM"
-        chmod "$FILEGRO" "$ITEM"
+        [ ! -z "$FILEOWN" ] && chown "$FILEOWN" "$ITEM" || safe_exit 1 "! Changing owner failed $ITEM"
+        [ ! -z "$FILEGRO" ] && chgrp "$FILEGRO" "$ITEM" || safe_exit 1 "! Changing group failed $ITEM"
+        chmod 660 "$ITEM" || safe_exit 1 "! Changing permissions failed $ITEM"
         if [ "$ITEM" == "$XPOSEDENABLEDXML" ]; then
           echo "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map />" > "$ITEM"
         fi
@@ -274,35 +309,6 @@ source config.sh
 INSTALLER=$TMPDIR/$MODID
 MODPATH=$MOUNTPATH/$MODID
 
-rm -rf $INSTALLER
-mkdir -p $INSTALLER
-cd $INSTALLER
-# unzip -o "$ZIP" common/* module.prop
-unzip -o "$ZIP"
-
-##########################################################################################
-# Main
-##########################################################################################
-
-# Print mod name
-print_modname
-
-# Please leave this message in your flashable zip for credits :)
-ui_print "******************************"
-ui_print "Powered by Magisk (@topjohnwu)"
-ui_print "******************************"
-
-ui_print "- Mounting /system(ro), /vendor(ro), /data, /cache"
-mount -o ro /system 2>/dev/null
-mount -o ro /vendor 2>/dev/null
-mount /data 2>/dev/null
-mount /cache 2>/dev/null
-
-if [ ! -f '/system/build.prop' ]; then
-  ui_print "! Failed: /system could not be mounted!"
-  exit 1
-fi
-
 # FILE LOCATIONS
 
 if [ -d "/system/system" ]; then
@@ -335,6 +341,44 @@ elif [ -d "/sdcard/0" ]; then
   SDCARD=/sdcard/0
 else
   SDCARD=/sdcard
+fi
+
+MIRRDIR=""
+if $BOOTMODE; then
+  MIRRDIR="/dev/magisk/mirror"
+fi
+
+MIRRSYS="$MIRRDIR$SYS"
+
+# Clean temporary files
+rm -rf $INSTALLER 2>/dev/null
+# unzip files into temperary folder $INSTALLER
+mkdir -p $INSTALLER
+cd $INSTALLER
+# unzip -o "$ZIP" common/* module.prop
+unzip -o "$ZIP"
+
+##########################################################################################
+# Main
+##########################################################################################
+
+# Print mod name
+print_modname
+
+# Please leave this message in your flashable zip for credits :)
+ui_print "******************************"
+ui_print "Powered by Magisk (@topjohnwu)"
+ui_print "******************************"
+
+ui_print "- Mounting /system(ro), /vendor(ro), /data, /cache"
+mount -o ro /system 2>/dev/null
+mount -o ro /vendor 2>/dev/null
+mount /data 2>/dev/null
+mount /cache 2>/dev/null
+
+if [ ! -f '/system/build.prop' ]; then
+  ui_print "! Failed: /system could not be mounted!"
+  exit 1
 fi
 
 API=`grep_prop ro.build.version.sdk`
@@ -417,35 +461,68 @@ if ! is_mounted $MOUNTPATH; then
   exit 1
 fi
 
-# Create mod paths
-ui_print "- Cleaning YouTube app in /data"
-# rm -rf /data/app/com.atmos-*
-# rm -rf /data/data/com.atmos
-# rm -rf /data/app/com.atmos.daxappUI-*
-# rm -rf /data/data/com.atmos.daxappUI
-rm -rf /data/app/com.google.android.youtube-*
-# rm -rf /data/data/com.google.android.youtube
-rm -rf $MODPATH
+# #TODO: If we're upgrading in Magisk Manager,
+# just overwrite OGYouTube apk in /magisk/$MODID directly
+UPGRADE=false
+$BOOTMODE && [ -d "/magisk/$MODID" ] && UPGRADE=true
+
+# Flashing zip twice for uninstallation, ONLY available in recovery
+if ! $BOOTMODE && [ -d "$MODPATH" ]; then
+  ui_print "- Removing module $MODPATH"
+  rm -rf $MODPATH
+  rm /magisk/.core/post-fs-data.d/$CHECKERSCRIPT
+  ui_print "  Removing apps in /data"
+  rm -rf /data/app/${PACKAGENAME1}-*
+  rm -rf /data/app/${PACKAGENAME2}-*
+  safe_exit 0 "- Done"
+else
+  ui_print "- Installing module $MODPATH"
+fi
+
+# Clean conflicts
+if [ "$(echo /data/app/${PACKAGENAME0}-*)" != "/data/app/${PACKAGENAME0}-*" ]; then
+  ui_print "- Cleaning official YouTube app in /data"
+  rm -rf /data/app/${PACKAGENAME0}-*
+  # rm -rf /data/data/${PACKAGENAME0}
+fi
 
 # Create mod paths
 # empty folders will be deleted by magisk_mount.sh during boot
+rm -rf $MODPATH 2>/dev/null
 # mkdir -p $MODPATH
 mkdir -p $MODPATH$SYS
 # mkdir -p $MODPATH$SYS/vendor/etc
 
-# Handle removal files
-if [ -n "$REMOVAL" ]; then
-  ui_print "- Removing system files systemlessly"
-  for TARGET in $REMOVAL; do
-    if [ -d "$TARGET" ]; then
-      mktouch $MODPATH$TARGET/.replace
-      ui_print "  removing folder $TARGET"
-    elif [ -f "$TARGET" ]; then
-      mktouch $MODPATH$TARGET
-      ui_print "  removing file $TARGET"
-    elif [ -L $TARGET ]; then
-      mktouch $MODPATH$TARGET
-      ui_print "  removing symlink $TARGET"
+# Cleaning conflicts in /magisk
+if [ -n "$TESTREMOVAL" ]; then
+  ui_print "- Cleaning conflicts in /magisk"
+  for TARGET in $TESTREMOVAL; do
+    # for FILETYPE in d f l; do
+    for FILETYPE in d; do
+      RESULT=$(find /magisk/* -name "${TARGET##/*/}" -type "$FILETYPE" 2>/dev/null | grep -v $MODID | grep "$TARGET")
+      if [ ! -z "$RESULT" ]; then
+        for ITEM in $RESULT; do
+          ui_print "  $ITEM"
+          rm -rf "$ITEM"
+        done
+      fi
+    done
+  done
+fi
+
+# Handle removal files after test
+if [ -n "$TESTREMOVAL" ]; then
+  ui_print "- Removing existing files systemlessly"
+  for TARGET in $TESTREMOVAL; do
+    if [ -d "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET/.replace"
+    elif [ -f "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET"
+    elif [ -L "$MIRRDIR$TARGET" ]; then
+      ui_print "  $TARGET"
+      mktouch "$MODPATH$TARGET"
     else
       :
     fi
@@ -455,46 +532,57 @@ fi
 # Copy files
 ui_print "- Copying files"
 # unzip -o "$ZIP" system/* -d $MODPATH
-if [ -f "/magisk/xposed/post-fs-data.sh" -a ! -e "/magisk/xposed/remove" -a ! -e "/magisk/xposed/disable" ] \
-  || [ -f "$SYS/framework/XposedBridge.jar" ]; then
+if $XPOSEDSWITCH && \
+  [ -f "/magisk/xposed/post-fs-data.sh" -a ! -e "/magisk/xposed/remove" -a ! -e "/magisk/xposed/disable" ] || \
+  [ -f "$SYS/framework/XposedBridge.jar" ]; then
+
   ui_print "  OGYouTube Xposed version"
+  rm -rf /data/app/${PACKAGENAME2}-*
   cp -af $INSTALLER/xposed/* $MODPATH$SYS
-  install_package "$APKNAME1" "$PACKAGENAME1" "xposed"
-  sed -i "s#VERSION_STUB#Xposed#" $INSTALLER/module.prop
-  if $THEMEDINSTALL; then
-    install_package "$APKNAME3" "$PACKAGENAME3"
-    install_package "$APKNAME2" "$PACKAGENAME2"
+  [ ! -d "/magisk/.core/post-fs-data.d" ] && mkdir -p "/magisk/.core/post-fs-data.d"
+  cp -af "$INSTALLER/common/$CHECKERSCRIPT" "/magisk/.core/post-fs-data.d/"
+
+  install_package "$APKNAME1" "$PACKAGENAME1" "force" "xposed"
+  sed -i "s#VERSION_STUB#Xposed Version#" $INSTALLER/module.prop
+
+  if $THEMEDADDONSWITCH; then
+    install_package "$APKNAME4" "$PACKAGENAME3" "force"
+    install_package "$APKNAME2" "$PACKAGENAME2" "force"
   fi
-elif [ -f "/sbin/launch_daemonsu.sh" -o -e "/magisk/.core/bin/su" -o -e "/magisk/.core/su/su" \
-  -o -e "/magisk/phh/bin/su" ]; then
-  ui_print "  OGYouTube rooted version"
-  cp -af $INSTALLER/rooted/* $MODPATH$SYS
-  install_package "$APKNAME2" "$PACKAGENAME2"
-  sed -i "s#VERSION_STUB#Rooted#" $INSTALLER/module.prop
-  if $THEMEDINSTALL; then
-    install_package "$APKNAME3" "$PACKAGENAME3"
-    # install_package "$APKNAME2" "$PACKAGENAME2"
+elif $ROOTSWITCH && \
+  [ -e "/magisk/.core/bin/su" -o -e "/magisk/.core/su/su" -o \
+  -f "/sbin/launch_daemonsu.sh" -o -e "/magisk/phh/bin/su" ]; then
+
+  ui_print "  OGYouTube root version"
+  rm -rf /data/app/${PACKAGENAME1}-*
+  cp -af $INSTALLER/root/* $MODPATH$SYS
+  [ ! -d "/magisk/.core/post-fs-data.d" ] && mkdir -p "/magisk/.core/post-fs-data.d"
+  cp -af "$INSTALLER/common/$CHECKERSCRIPT" "/magisk/.core/post-fs-data.d/"
+
+  install_package "$APKNAME2" "$PACKAGENAME2" "force"
+  sed -i "s#VERSION_STUB#Root Version#" $INSTALLER/module.prop
+
+  if $THEMEDADDONSWITCH; then
+    install_package "$APKNAME4" "$PACKAGENAME3" "force"
+    # install_package "$APKNAME2" "$PACKAGENAME2" "force"
   fi
 else
   ui_print "! No xposed or root is detected."
   if [ -f "$INSTALLER/common/$APKNAME4" ]; then
-    ui_print "- Installing unrooted, themed version instead"
-    install_package "$APKNAME4" "$PACKAGENAME3"
-    install_package "$APKNAME2" "$PACKAGENAME2"
+    rm -rf /data/app/${PACKAGENAME1}-*
+    ui_print "- Installing themed, unroot version instead"
+    install_package "$APKNAME4" "$PACKAGENAME3" "force"
+    install_package "$APKNAME2" "$PACKAGENAME2" "force"
   elif [ -f "$INSTALLER/common/$APKNAME3" ]; then
-    ui_print "- Installing unrooted version instead"
-    install_package "$APKNAME3" "$PACKAGENAME3"
-    install_package "$APKNAME2" "$PACKAGENAME2"
+    rm -rf /data/app/${PACKAGENAME1}-*
+    ui_print "- Installing unroot version instead"
+    install_package "$APKNAME3" "$PACKAGENAME3" "force"
+    install_package "$APKNAME2" "$PACKAGENAME2" "force"
   else
-    ui_print "! ONLY xposed and rooted version are provided here."
-    ui_print "  You should use the unrooted version."
+    ui_print "! ONLY xposed and root version are provided here."
+    ui_print "  You should use the unroot version."
+    safe_exit 1
   fi
-  rm -rf $MODPATH
-  umount $MOUNTPATH
-  losetup -d $LOOPDEVICE
-  rm -rf $MOUNTPATH
-  rm -rf $INSTALLER
-  exit 1
 fi
 
 # Copy selected lib
