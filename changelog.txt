@@ -1,3 +1,8 @@
+v3.5 - 11/05/2017
+    - Removed checking for updates
+    - Removed "Report", "Request" options from settings
+    - Removed Bugs reports
+
 v3.1 - 14/04/2017
     - Fixed an issue with Popup mode
     - Fixed an issue with seeking controls
