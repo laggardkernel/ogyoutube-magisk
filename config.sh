@@ -52,8 +52,8 @@ PROPFILE=false
 buildname="system.prop"
 tweakname="tweak.prop"
 
-VERSION="v3.1-12.10.60"
-REVISION="0.2"
+VERSION="v3.5-12.10.60"
+REVISION="0.1"
 
 CHECKERSCRIPT="ogyoutube-checker.sh"
 # DYNAMICSCRIPT=""
